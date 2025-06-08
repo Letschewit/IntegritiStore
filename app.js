@@ -1,10 +1,12 @@
+import React, { useState, useEffect, useRef } from 'react';
+import ReactDOM from 'react-dom';
 import { DndProvider, useDrag, useDrop } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { SketchPicker } from 'react-color';
 
 function DraggableLayer({ index, moveLayer, children }) {
   const [, ref] = useDrop({
-    accept: "layer",
+    accept: 'layer',
     hover(item) {
       if (item.index !== index) {
         moveLayer(item.index, index);
@@ -14,7 +16,7 @@ function DraggableLayer({ index, moveLayer, children }) {
   });
 
   const [{ isDragging }, drag] = useDrag({
-    type: "layer",
+    type: 'layer',
     item: { index },
     collect: (monitor) => ({ isDragging: monitor.isDragging() }),
   });
@@ -28,10 +30,10 @@ function DraggableLayer({ index, moveLayer, children }) {
 
 function TShirtDesigner() {
   const canvasRef = useRef(null);
-  const [text, setText] = useState("");
-  const [color, setColor] = useState("#000000");
-  const [tshirtColor, setTshirtColor] = useState("#ffffff");
-  const [font, setFont] = useState("Arial");
+  const [text, setText] = useState('');
+  const [color, setColor] = useState('#000000');
+  const [tshirtColor, setTshirtColor] = useState('#ffffff');
+  const [font, setFont] = useState('Arial');
   const [images, setImages] = useState([]);
   const [textPos, setTextPos] = useState({ x: 200, y: 360 });
   const [draggingText, setDraggingText] = useState(false);
@@ -40,11 +42,14 @@ function TShirtDesigner() {
 
   useEffect(() => {
     draw();
-    localStorage.setItem("tshirt-design", JSON.stringify({ text, color, tshirtColor, font, images, textPos, textStyle, imageTransform }));
+    localStorage.setItem(
+      'tshirt-design',
+      JSON.stringify({ text, color, tshirtColor, font, images, textPos, textStyle, imageTransform })
+    );
   }, [text, color, tshirtColor, font, images, textPos, textStyle, imageTransform]);
 
   useEffect(() => {
-    const saved = localStorage.getItem("tshirt-design");
+    const saved = localStorage.getItem('tshirt-design');
     if (saved) {
       const design = JSON.parse(saved);
       setText(design.text);
@@ -60,34 +65,39 @@ function TShirtDesigner() {
 
   const draw = () => {
     const canvas = canvasRef.current;
-    const ctx = canvas.getContext("2d");
+    const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     ctx.fillStyle = tshirtColor;
     ctx.fillRect(100, 50, 200, 300);
 
-    images.forEach((imgObj, idx) => {
-      const img = new Image();
-      img.onload = () => {
-        ctx.save();
-        ctx.translate(imgObj.x + imgObj.width / 2, imgObj.y + imgObj.height / 2);
-        const transform = imageTransform[idx] || { rotation: 0, flip: false };
-        if (transform.flip) ctx.scale(-1, 1);
-        ctx.rotate((transform.rotation * Math.PI) / 180);
-        ctx.drawImage(img, -imgObj.width / 2, -imgObj.height / 2, imgObj.width, imgObj.height);
-        ctx.restore();
-        drawText(ctx);
-      };
-      img.src = URL.createObjectURL(imgObj.file);
-    });
-
-    if (images.length === 0) drawText(ctx);
+    if (images.length === 0) {
+      drawText(ctx);
+    } else {
+      let loadedCount = 0;
+      images.forEach((imgObj, idx) => {
+        const img = new Image();
+        img.onload = () => {
+          ctx.save();
+          ctx.translate(imgObj.x + imgObj.width / 2, imgObj.y + imgObj.height / 2);
+          const transform = imageTransform[idx] || { rotation: 0, flip: false };
+          if (transform.flip) ctx.scale(-1, 1);
+          ctx.rotate((transform.rotation * Math.PI) / 180);
+          ctx.drawImage(img, -imgObj.width / 2, -imgObj.height / 2, imgObj.width, imgObj.height);
+          ctx.restore();
+          URL.revokeObjectURL(img.src);
+          loadedCount++;
+          if (loadedCount === images.length) drawText(ctx);
+        };
+        img.src = URL.createObjectURL(imgObj.file);
+      });
+    }
   };
 
   const drawText = (ctx) => {
     ctx.fillStyle = color;
-    ctx.font = `${textStyle.italic ? "italic" : ""} ${textStyle.bold ? "bold" : ""} 30px ${font}`;
-    ctx.textAlign = "center";
+    ctx.font = `${textStyle.italic ? 'italic' : ''} ${textStyle.bold ? 'bold' : ''} 30px ${font}`;
+    ctx.textAlign = 'center';
     ctx.fillText(text, textPos.x, textPos.y);
     if (textStyle.underline) {
       const textWidth = ctx.measureText(text).width;
@@ -119,14 +129,23 @@ function TShirtDesigner() {
     setImageTransform(updated);
   };
 
+  const deleteImage = (index) => {
+    const updatedImages = [...images];
+    updatedImages.splice(index, 1);
+    setImages(updatedImages);
+    const updatedTransforms = [...imageTransform];
+    updatedTransforms.splice(index, 1);
+    setImageTransform(updatedTransforms);
+  };
+
   const toggleStyle = (style) => {
     setTextStyle((prev) => ({ ...prev, [style]: !prev[style] }));
   };
 
   const downloadImage = () => {
     const canvas = canvasRef.current;
-    const link = document.createElement("a");
-    link.download = "tshirt-design.png";
+    const link = document.createElement('a');
+    link.download = 'tshirt-design.png';
     link.href = canvas.toDataURL();
     link.click();
   };
@@ -148,9 +167,9 @@ function TShirtDesigner() {
       <div className="space-y-4">
         <input className="border p-2 w-full" placeholder="Enter text" value={text} onChange={(e) => setText(e.target.value)} />
         <div className="flex gap-2 flex-wrap">
-          <button onClick={() => toggleStyle("bold")}>Bold</button>
-          <button onClick={() => toggleStyle("italic")}>Italic</button>
-          <button onClick={() => toggleStyle("underline")}>Underline</button>
+          <button onClick={() => toggleStyle('bold')}>Bold</button>
+          <button onClick={() => toggleStyle('italic')}>Italic</button>
+          <button onClick={() => toggleStyle('underline')}>Underline</button>
         </div>
         <SketchPicker color={color} onChangeComplete={(c) => setColor(c.hex)} />
         <SketchPicker color={tshirtColor} onChangeComplete={(c) => setTshirtColor(c.hex)} />
@@ -168,6 +187,7 @@ function TShirtDesigner() {
                 <button onClick={() => rotateImage(i, 15)}>Rotate +15°</button>
                 <button onClick={() => rotateImage(i, -15)}>Rotate -15°</button>
                 <button onClick={() => flipImage(i)}>Flip</button>
+                <button onClick={() => deleteImage(i)}>Delete</button>
               </div>
             </div>
           </DraggableLayer>
@@ -180,7 +200,17 @@ function TShirtDesigner() {
           width={400}
           height={400}
           className="border rounded"
-          onMouseDown={(e) => setDraggingText(true)}
+          onMouseDown={(e) => {
+            const rect = canvasRef.current.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            const ctx = canvasRef.current.getContext('2d');
+            const textWidth = ctx.measureText(text).width;
+            const textHeight = 30;
+            if (x >= textPos.x - textWidth / 2 && x <= textPos.x + textWidth / 2 && y >= textPos.y - textHeight && y <= textPos.y) {
+              setDraggingText(true);
+            }
+          }}
           onMouseUp={() => setDraggingText(false)}
           onMouseMove={(e) => {
             if (!draggingText) return;
@@ -199,5 +229,5 @@ ReactDOM.render(
   <DndProvider backend={HTML5Backend}>
     <TShirtDesigner />
   </DndProvider>,
-  document.getElementById("root")
+  document.getElementById('root')
 );
