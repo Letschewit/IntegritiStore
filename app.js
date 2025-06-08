@@ -1,6 +1,6 @@
-import { DndProvider, useDrag, useDrop } from 'react-dnd'
-import { HTML5Backend } from 'react-dnd-html5-backend'
-import { SketchPicker } from 'react-color'
+import { DndProvider, useDrag, useDrop } from 'react-dnd';
+import { HTML5Backend } from 'react-dnd-html5-backend';
+import { SketchPicker } from 'react-color';
 
 function DraggableLayer({ index, moveLayer, children }) {
   const [, ref] = useDrop({
